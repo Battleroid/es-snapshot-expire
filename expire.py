@@ -13,6 +13,7 @@ from curator import SnapshotList
 from elasticsearch import Elasticsearch
 
 
+# sure, whatever
 logging.basicConfig(format='%(message)s', stream=sys.stdout, level=logging.INFO)
 structlog.configure(
     processors=[
@@ -50,7 +51,7 @@ def delete_snapshots(cluster):
         return
     clog.info('found_snapshots', snapshots_list=slo.working_list(), total=len(slo.working_list()))
 
-    # delete snapshots, ignoring any/all exceptions except success (404)
+    # delete snapshots, ignoring any/all exceptions except success (404, meaning it no longer exists)
     for i, snapshot in enumerate(slo.working_list()):
         start_time = time.time()
         clog.info('deleting_snapshot', snapshot=snapshot)
