@@ -68,7 +68,7 @@ def delete_snapshots(cluster):
                 break
         clog.info('deleted_snapshot', snapshot=snapshot, duration=time.time() - start_time)
 
-    clog.info('finished')
+    clog.info('finished_deletes')
 
 
 def main(config):
@@ -81,11 +81,14 @@ def main(config):
             cluster.setdefault(k, v)
 
     log.info('built_config')
+    start_time = time.time()
 
     # launch jobs
     with ThreadPoolExecutor() as tpe:
         for cluster in config['clusters']:
             tpe.submit(delete_snapshots, cluster)
+
+    log.info('finished_all', duration=time.time() - start_time)
 
 
 parser = argparse.ArgumentParser(description='Expire snapshots forcibly, unlike curator.')
