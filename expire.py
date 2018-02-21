@@ -38,10 +38,16 @@ logging.getLogger('elasticsearch').setLevel(100)
 
 def delete_snapshots(cluster):
 
+
     # client setup
     auth = (cluster['username'], cluster['password'])
     es = Elasticsearch(cluster['url'], use_ssl=True, http_auth=auth, timeout=180, request_timeout=180)
     clog = log.bind(cluster=es.cluster.health()['cluster_name'])
+
+    # can't get snapshots from an ambiguous (missing) repository
+    if not cluster.get('repository'):
+        clog.error('config_error', message='Missing snapshot repository!')
+        return
 
     # filter snapshots
     slo = SnapshotList(es, repository=cluster['repository'])
