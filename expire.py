@@ -13,6 +13,9 @@ from curator import SnapshotList
 from elasticsearch import Elasticsearch
 
 
+__version__ = '0.1'
+
+
 # sure, whatever
 logging.basicConfig(format='%(message)s', stream=sys.stdout, level=logging.INFO)
 structlog.configure(
@@ -37,7 +40,9 @@ logging.getLogger('elasticsearch').setLevel(100)
 
 
 def delete_snapshots(cluster):
-
+    """
+    Delete snapshots from given cluster.
+    """
 
     # client setup
     auth = (cluster['username'], cluster['password'])
@@ -78,6 +83,10 @@ def delete_snapshots(cluster):
 
 
 def main(config):
+    """
+    Delete multiple clusters worth of snapshots.
+    """
+
     config = yaml.safe_load(os.path.expandvars(config.read_text()))
 
     # build config
@@ -99,7 +108,13 @@ def main(config):
 
 parser = argparse.ArgumentParser(description='Expire snapshots forcibly, unlike curator.')
 parser.add_argument('config', type=Path, default='config.yaml', help='Config file.')
+parser.add_argument('--version', action='version', version='es-snapshot-expire ' + __version__)
 
-if __name__ == '__main__':
+
+def run():
     args = parser.parse_args()
     main(args.config)
+
+
+if __name__ == '__main__':
+    run()
