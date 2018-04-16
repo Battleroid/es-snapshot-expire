@@ -1,0 +1,14 @@
+---
+settings:
+  username: curator
+  password: password
+  # older than 7 days are purged
+  older_than: 7
+  repository: ceph
+clusters:
+  - url: https://es-cluster-api.example.com
+  - url: https://es-misc-api.example.com
+  - url: https://es-other-api.example.com
+    older_than: 3
+    username: something
+    password: else
