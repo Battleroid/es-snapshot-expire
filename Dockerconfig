@@ -1,0 +1,18 @@
+#!/bin/bash
+
+GIT_REPO="ops/es-snapshot-expire"
+IMAGE_NAME="datastore/es-snapshot-expire"
+
+PARENT_IMAGE="rsg/centos/7/python-36"
+PARENT_IMAGE_TAG="3.6.4-18eb7fb"
+OUR_REGISTRY="dockerfactory.rsglab.com"
+NAMESPACE="rsg"
+
+IMAGE_TAG="0.1"
+
+initializeTemplate() {
+    sed \
+        -e "s,@@PARENTIMAGE@@,$PARENT_IMAGE,g" \
+        -e "s,@@PARENTIMAGEVERSION@@,$PARENT_IMAGE_TAG,g" \
+        Dockerfile.tmpl > Dockerfile
+}
