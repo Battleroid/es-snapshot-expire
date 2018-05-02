@@ -46,7 +46,7 @@ def delete_snapshots(cluster):
 
     # client setup
     auth = (cluster['username'], cluster['password'])
-    es = Elasticsearch(cluster['url'], use_ssl=True, http_auth=auth, timeout=180, request_timeout=180)
+    es = Elasticsearch(cluster['url'], use_ssl=True, http_auth=auth, verify_certs=True, timeout=900, request_timeout=300)
     clog = log.bind(cluster=es.cluster.health()['cluster_name'])
 
     # can't get snapshots from an ambiguous (missing) repository

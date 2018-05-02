@@ -14,7 +14,12 @@ setup(
     description='Force those snapshots to die',
     url='https://github.com/battleroid/es-snapshot-expire',
     py_modules=['expire'],
-    install_requires=requirements,
+    install_requires=[
+        'elasticsearch-curator',
+        'elasticsearch',
+        'certifi',
+        'pyyaml'
+    ],
     entry_points="""
         [console_scripts]
         es-snapshot-expire=expire:run
