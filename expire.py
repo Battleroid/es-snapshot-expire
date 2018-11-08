@@ -2,6 +2,7 @@ import argparse
 import logging
 import time
 import sys
+import re
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -35,11 +36,11 @@ structlog.configure(
     cache_logger_on_first_use=True
 )
 
+logging.getLogger('elasticsearch').setLevel(logging.ERROR)
 log = structlog.getLogger('expire')
-logging.getLogger('elasticsearch').setLevel(100)
 
 
-def delete_snapshots(cluster):
+def delete_snapshots(cluster, for_real):
     """
     Delete snapshots from given cluster.
     """
@@ -47,16 +48,20 @@ def delete_snapshots(cluster):
     # client setup
     auth = (cluster['username'], cluster['password'])
     es = Elasticsearch(cluster['url'], use_ssl=True, http_auth=auth, verify_certs=True, timeout=900, request_timeout=300)
-    clog = log.bind(cluster=es.cluster.health()['cluster_name'])
+    clog = log.bind(cluster=es.cluster.health()['cluster_name'], dry_run='ON' if not for_real else 'OFF')
 
     # can't get snapshots from an ambiguous (missing) repository
     if not cluster.get('repository'):
         clog.error('config_error', message='Missing snapshot repository!')
         return
 
+    patterns = cluster.get('exclude', [])
+
     # filter snapshots
     slo = SnapshotList(es, repository=cluster['repository'])
     slo.filter_by_age(direction='older', unit='days', unit_count=int(cluster['older_than']))
+    for pattern in patterns:
+        slo.filter_by_regex(kind='regex', value=pattern, exclude=True)
     if not slo.working_list():
         clog.warn('no_snapshots', message='No snapshots found.')
         return
@@ -66,23 +71,24 @@ def delete_snapshots(cluster):
     for i, snapshot in enumerate(slo.working_list()):
         start_time = time.time()
         clog.info('deleting_snapshot', snapshot=snapshot)
-        while True:
-            try:
-                es.snapshot.delete(cluster['repository'], snapshot, request_timeout=20)
-            except Exception as e:
-                if e.status_code == 404:
+        if for_real:
+            while True:
+                try:
+                    es.snapshot.delete(cluster['repository'], snapshot, request_timeout=30)
+                except Exception as e:
+                    if e.status_code == 404:
+                        break
+                    if e.status_code == 503:
+                        time.sleep(30)
+                    time.sleep(10)
+                else:
                     break
-                if e.status_code == 503:
-                    time.sleep(30)
-                time.sleep(10)
-            else:
-                break
         clog.info('deleted_snapshot', snapshot=snapshot, duration=time.time() - start_time)
 
     clog.info('finished_deletes')
 
 
-def main(config):
+def main(config, for_real):
     """
     Delete multiple clusters worth of snapshots.
     """
@@ -101,7 +107,7 @@ def main(config):
     # launch jobs
     with ThreadPoolExecutor() as tpe:
         for cluster in config['clusters']:
-            tpe.submit(delete_snapshots, cluster)
+            tpe.submit(delete_snapshots, cluster, for_real)
 
     log.info('finished_all', duration=time.time() - start_time)
 
@@ -109,11 +115,12 @@ def main(config):
 parser = argparse.ArgumentParser(description='Expire snapshots forcibly, unlike curator.')
 parser.add_argument('config', type=Path, default='config.yaml', help='Config file.')
 parser.add_argument('--version', action='version', version='es-snapshot-expire ' + __version__)
+parser.add_argument('--for-real', action='store_true', default=False, help='delete for real')
 
 
 def run():
     args = parser.parse_args()
-    main(args.config)
+    main(args.config, args.for_real)
 
 
 if __name__ == '__main__':
