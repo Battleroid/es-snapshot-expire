@@ -5,9 +5,15 @@ settings:
   # older than 7 days are purged
   older_than: 7
   repository: ceph
+  # set if cluster config doesn't have anything for exclude set
+  exclude:
+    - 2017
 clusters:
   - url: https://es-cluster-api.example.com
   - url: https://es-misc-api.example.com
+    exclude:
+      - ^2018
+      - something.*else
   - url: https://es-other-api.example.com
     older_than: 3
     username: something

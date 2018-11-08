@@ -4,4 +4,18 @@ Expires snapshots for multiple clusters, forcibly. Curator will not do this as y
 
 ## Usage
 
+```
+usage: expire.py [-h] [--version] [--for-real] config
+
+Expire snapshots forcibly, unlike curator.
+
+positional arguments:
+  config      Config file.
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit
+  --for-real  delete for real
+```
+
 See the [sample](sample.yaml) for a sample setup against multiple clusters.
