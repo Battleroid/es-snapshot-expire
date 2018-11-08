@@ -14,7 +14,7 @@ from curator import SnapshotList
 from elasticsearch import Elasticsearch
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 
 # sure, whatever
